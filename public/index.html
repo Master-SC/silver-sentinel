@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SilverSentinel - Emergency Dispatch Triage Dashboard</title>
+  <meta name="description" content="Automated extreme weather triage and emergency dispatch portal to support vulnerable older citizens in the UK.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-area">
+        <div class="pulse-indicator" id="system-status-indicator"></div>
+        <h1>SilverSentinel</h1>
+        <span class="badge badge-primary">Emergency Triage Engine</span>
+      </div>
+      <div class="system-stats">
+        <div class="stat-box" id="stat-active-alerts">
+          <span class="stat-label">Active Alerts</span>
+          <span class="stat-value" id="val-active-alerts">0</span>
+        </div>
+        <div class="stat-box" id="stat-vulnerable-count">
+          <span class="stat-label">Total Vulnerable</span>
+          <span class="stat-value" id="val-vulnerable-count">0</span>
+        </div>
+        <div class="stat-box" id="stat-triaged-count">
+          <span class="stat-label">Triaged & Risk-Matched</span>
+          <span class="stat-value" id="val-triaged-count">0</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Grid Layout -->
+    <main class="dashboard-grid">
+      <!-- Left Column: Alerts & Simulation Controls -->
+      <section class="grid-section col-alerts" aria-labelledby="section-alerts-title">
+        <div class="section-header">
+          <h2 id="section-alerts-title">Met Office Alerts</h2>
+          <span class="badge badge-outline">Phase 1: Intake</span>
+        </div>
+        
+        <div class="card simulation-control">
+          <h3>Simulate Weather Event</h3>
+          <p class="description">Select a simulated severe weather alert to run the ingestion, triage, and dispatch sub-agent pipeline.</p>
+          <div class="sim-buttons">
+            <button class="btn btn-red" id="btn-sim-flood">
+              <span class="icon">🌊</span> Red Flood (London/South)
+            </button>
+            <button class="btn btn-amber" id="btn-sim-freeze">
+              <span class="icon">❄️</span> Amber Freeze (Scotland)
+            </button>
+            <button class="btn btn-yellow" id="btn-sim-storm">
+              <span class="icon">💨</span> Yellow Gale (Liverpool/Wales)
+            </button>
+            <button class="btn btn-slate" id="btn-reset-pipeline">
+              <span class="icon">🔄</span> Reset Simulator
+            </button>
+          </div>
+        </div>
+
+        <!-- Interactive Geographic Map Card -->
+        <div class="card map-card">
+          <div class="map-header">
+            <h3>Geographic Dispatch Map</h3>
+            <span class="map-legend"><span class="legend-dot critical"></span> Critical <span class="legend-dot high"></span> High</span>
+          </div>
+          <div class="map-wrapper">
+            <svg id="uk-dispatch-map" viewBox="0 0 300 400" width="100%" height="100%">
+              <!-- Grid background -->
+              <defs>
+                <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+                  <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                </pattern>
+                <radialGradient id="hub-glow-Red" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="var(--color-red)" stop-opacity="0.4"/>
+                  <stop offset="100%" stop-color="var(--color-red)" stop-opacity="0"/>
+                </radialGradient>
+                <radialGradient id="hub-glow-Amber" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="var(--color-amber)" stop-opacity="0.4"/>
+                  <stop offset="100%" stop-color="var(--color-amber)" stop-opacity="0"/>
+                </radialGradient>
+                <radialGradient id="hub-glow-Yellow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="var(--color-yellow)" stop-opacity="0.4"/>
+                  <stop offset="100%" stop-color="var(--color-yellow)" stop-opacity="0"/>
+                </radialGradient>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" rx="8" />
+
+              <!-- Stylized UK Outline lines -->
+              <path d="M 60,60 L 90,40 L 150,20 L 160,50 L 190,80 L 170,120 L 210,160 L 220,240 L 200,320 L 140,370 L 90,350 L 110,310 L 80,290 L 90,260 L 120,250 L 130,210 L 100,160 L 70,130 L 60,90 Z" 
+                    fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2" stroke-dasharray="4,4" />
+
+              <!-- Regional Hazard Zones Glows -->
+              <circle id="glow-scotland" cx="130" cy="80" r="45" fill="url(#hub-glow-Amber)" opacity="0" class="zone-glow" />
+              <circle id="glow-london" cx="190" cy="300" r="40" fill="url(#hub-glow-Red)" opacity="0" class="zone-glow" />
+              <circle id="glow-west" cx="120" cy="270" r="35" fill="url(#hub-glow-Yellow)" opacity="0" class="zone-glow" />
+
+              <!-- Hub Markers -->
+              <g class="map-hub" id="hub-edinburgh" transform="translate(130, 80)">
+                <circle r="6" class="hub-center" />
+                <text y="-10" text-anchor="middle" class="hub-label">Edinburgh</text>
+              </g>
+              <g class="map-hub" id="hub-london" transform="translate(190, 300)">
+                <circle r="6" class="hub-center" />
+                <text y="-10" text-anchor="middle" class="hub-label">London</text>
+              </g>
+              <g class="map-hub" id="hub-liverpool" transform="translate(135, 210)">
+                <circle r="5" class="hub-center" />
+                <text x="8" y="3" class="hub-label">Liverpool</text>
+              </g>
+              <g class="map-hub" id="hub-cardiff" transform="translate(110, 290)">
+                <circle r="5" class="hub-center" />
+                <text x="-8" y="3" text-anchor="end" class="hub-label">Cardiff</text>
+              </g>
+              <g class="map-hub" id="hub-belfast" transform="translate(60, 160)">
+                <circle r="5" class="hub-center" />
+                <text y="-10" text-anchor="middle" class="hub-label">Belfast</text>
+              </g>
+
+              <!-- Dynamic Resident Pins Container -->
+              <g id="map-pins"></g>
+            </svg>
+          </div>
+        </div>
+
+        <div class="alert-list-container" id="alert-feed-list">
+          <!-- Populated dynamically -->
+          <div class="empty-state">No active weather alerts loaded. Select a simulation above to start.</div>
+        </div>
+      </section>
+
+      <!-- Middle Column: Triaged Residents -->
+      <section class="grid-section col-residents" aria-labelledby="section-residents-title">
+        <div class="section-header">
+          <h2 id="section-residents-title">Vulnerable Residents Triage</h2>
+          <span class="badge badge-accent">Phase 2: Sub-Agent Matching</span>
+        </div>
+
+        <!-- Quick filter tags -->
+        <div class="quick-filters-row" id="quick-filters-container">
+          <button class="filter-tag active" data-filter="ALL">All Profiles</button>
+          <button class="filter-tag" data-filter="DEVICE">🔌 Medical Device</button>
+          <button class="filter-tag" data-filter="MOBILITY">♿ Low Mobility</button>
+          <button class="filter-tag" data-filter="ISOLATED">🏠 Living Alone</button>
+          <button class="filter-tag" data-filter="COPD">🫁 COPD</button>
+        </div>
+        
+        <div class="triage-filters-bar">
+          <div class="search-box">
+            <input type="text" id="resident-search-input" placeholder="Search by name, postcode, or condition...">
+          </div>
+          <div class="filter-options">
+            <select id="filter-urgency-select">
+              <option value="ALL">All Urgencies</option>
+              <option value="CRITICAL">Critical Only</option>
+              <option value="HIGH">High & Critical</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="residents-list-container" id="residents-triage-list">
+          <div class="empty-state">
+            <div class="empty-icon">👥</div>
+            <p>Waiting for weather alert intake. Trigger a simulation to match vulnerable residents.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Dispatch Routes & Checklist -->
+      <section class="grid-section col-dispatch" aria-labelledby="section-dispatch-title">
+        <div class="section-header">
+          <h2 id="section-dispatch-title">Volunteer Dispatch Routes</h2>
+          <span class="badge badge-success">Phase 3: Route Optimization</span>
+        </div>
+
+        <div class="routes-container" id="dispatch-routes-list">
+          <div class="empty-state">
+            <div class="empty-icon">📍</div>
+            <p>Routes will generate automatically following the resident triage phase.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Sub-Agent Live Reasoning Logs Console Panel -->
+    <section class="agent-console-panel card" id="agent-console">
+      <div class="console-header">
+        <div class="console-title-area">
+          <span class="console-indicator animate-pulse-fast"></span>
+          <h4>🤖 Sub-Agent Reasoning Console</h4>
+        </div>
+        <button class="btn-clear-console" id="btn-clear-console">Clear Console</button>
+      </div>
+      <div class="console-logs" id="console-logs-stream">
+        <div class="log-line system-msg">[SYSTEM] SilverSentinel Triage Dispatch Ready. Awaiting Met Office trigger...</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal for Score Explanation -->
+  <div class="modal-backdrop" id="explanation-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Triage Score Breakdown</h3>
+        <button class="close-btn" id="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body-content">
+        <!-- Loaded dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

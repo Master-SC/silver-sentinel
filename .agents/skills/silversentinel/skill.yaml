@@ -1,0 +1,32 @@
+name: silversentinel
+description: "SilverSentinel - Automated Extreme Weather Triage & Emergency Dispatch Agent"
+version: "1.0.0"
+author: "Antigravity Agent"
+capabilities:
+  - weather_alert_monitoring
+  - vulnerable_resident_triage
+  - geographic_routing_dispatch
+  - real_time_volunteer_dashboard
+
+pipelines:
+  intake_phase:
+    description: "Polls and parses Met Office severe weather alerts for targeted UK postcodes."
+    inputs:
+      - alert_feed_url
+    outputs:
+      - active_alerts
+  triage_phase:
+    description: "Spawns a sub-agent to cross-reference active alerts with the vulnerable resident database to calculate vulnerability scores."
+    inputs:
+      - active_alerts
+      - resident_db
+    outputs:
+      - prioritized_residents
+  dispatch_phase:
+    description: "Generates geo-routed checklists and dispatch tasks for community response volunteers."
+    inputs:
+      - prioritized_residents
+      - active_alerts
+    outputs:
+      - dispatch_checklist
+      - volunteer_routes
