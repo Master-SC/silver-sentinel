@@ -12,9 +12,6 @@ Here is a visual preview of the SilverSentinel Crisis Command Center:
 
 ![SilverSentinel Emergency Dashboard](dashboard.png)
 
-> [!NOTE]  
-> *A copy of this generated screenshot has been saved to your conversation workspace directory. Copy it into your project folder as `dashboard.png` before pushing to GitHub to display the image on your repository home page.*
-
 ---
 
 ## 🛠️ Architecture & Pipeline Overview
